@@ -12,6 +12,11 @@ import "hardhat-deploy-ethers";
 import { task } from "hardhat/config";
 import generateTsAbis from "./scripts/generateTsAbis";
 
+// // set proxy
+// const { ProxyAgent, setGlobalDispatcher } = require("undici");
+// const proxyAgent = new ProxyAgent('http://127.0.0.1:7890'); // change to yours
+// setGlobalDispatcher(proxyAgent);
+
 // If not set, it uses the hardhat account 0 private key.
 // You can generate a random account with `yarn generate` or `yarn account:import` to import your existing PK
 const deployerPrivateKey =
@@ -49,10 +54,10 @@ const config: HardhatUserConfig = {
     // View the networks that are pre-configured.
     // If the network you are looking for is not here you can add new network settings
     hardhat: {
-      forking: {
-        url: `https://eth-mainnet.alchemyapi.io/v2/${providerApiKey}`,
-        enabled: process.env.MAINNET_FORKING_ENABLED === "true",
-      },
+      // forking: {
+      //   url: `https://eth-mainnet.alchemyapi.io/v2/${providerApiKey}`,
+      //   enabled: process.env.MAINNET_FORKING_ENABLED === "true",
+      // },
     },
     mainnet: {
       url: "https://mainnet.rpc.buidlguidl.com",

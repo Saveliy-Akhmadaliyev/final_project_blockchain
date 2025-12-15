@@ -19,7 +19,10 @@
     "lint": "eslint",
     "lint-staged": "eslint",
     "test": "REPORT_GAS=true hardhat test --network hardhat",
-    "verify": "hardhat etherscan-verify"
+    "verify": "hardhat etherscan-verify",
+
+    "chain:local": "hardhat node --config hardhat.config.local.ts",
+    "deploy:local": "hardhat deploy --config hardhat.config.local.ts --export-all ../nextjs/contracts/deployedContracts.ts"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
@@ -47,6 +50,7 @@
     "hardhat-gas-reporter": "^2.2.1",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.1",
+    "solc": "0.8.20",
     "solidity-coverage": "^0.8.13",
     "ts-node": "^10.9.1",
     "typechain": "^8.3.2",
