@@ -1,88 +1,286 @@
-# 🏗 Scaffold-ETH 2
+# Payment Receiver Smart Contract
+Простой смарт-контракт для приема и управления произвольными платежами на Ethereum.
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+## 🎯 Основной функционал
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+### Для всех пользователей:
 
-⚙️ Built using NextJS, RainbowKit, Foundry/Hardhat, Wagmi, Viem, and Typescript.
+- **Отправка платежей** - любой может отправить ETH на контракт с описанием платежа
+    
+- **Прямые переводы** - можно отправлять ETH напрямую на адрес контракта (автоматическая запись)
+    
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+### Только для владельца контракта:
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+- **Вывод всех средств** - полный вывод ETH с контракта
+    
+- **Вывод определенной суммы** - частичный вывод указанной суммы
+    
+- **Передача прав владения** - передача контракта другому адресу
+    
 
-## Requirements
+## 📋 Функции контракта
 
-Before you begin, you need to install the following tools:
+### Чтение (Read - доступны всем)
 
-- [Node (>= v20.18.3)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
+- `getBalance()` → возвращает баланс контракта в wei
+    
+- `getOwner()` → возвращает адрес текущего владельца
+    
+- `owner()` → альтернативный способ получить владельца
+    
 
-## Quickstart
+### Запись (Write)
 
-To get started with Scaffold-ETH 2, follow the steps below:
+#### Для всех:
 
-1. Install the latest version of Scaffold-ETH 2
+- `makePayment(string description)` **payable** - отправить ETH с описанием
+    
 
+#### Только для владельца (только owner):
+
+- `withdraw()` - вывести ВСЕ ETH с контракта
+    
+- `withdrawAmount(uint256 amount)` - вывести ОПРЕДЕЛЕННУЮ сумму
+    
+- `transferOwnership(address payable newOwner)` - передать владение
+    
+
+#### Автоматическая функция:
+
+- `receive()` **payable** - принимает прямые переводы ETH (без вызова функций)
+    
+
+## 📊 События (Events)
+
+- **`PaymentReceived`** - при получении платежа:
+    
+    - `from` - отправитель
+        
+    - `amount` - сумма в wei
+        
+    - `description` - описание платежа
+        
+    - `timestamp` - время транзакции
+        
+- **`Withdrawn`** - при выводе средств:
+    
+    - `to` - получатель (всегда владелец)
+        
+    - `amount` - сумма в wei
+        
+    - `timestamp` - время транзакции
+        
+
+## 🔧 Как использовать
+
+### Через веб-интерфейс (ваше приложение)
+
+1. Подключите кошелек (MetaMask)
+    
+2. Введите сумму ETH для отправки
+    
+3. Добавьте описание (опционально)
+    
+4. Нажмите "Send Payment"
+    
+
+### Через Debug Contracts
+
+text
+
+Адрес контракта: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+Сеть: Localhost 8545 (Hardhat)
+
+### Через прямые вызовы
+
+```javascript
+// Пример через ethers.js
+const tx = await contract.makePayment("Оплата услуг", {
+  value: ethers.utils.parseEther("0.1") // 0.1 ETH
+});
 ```
-npx create-eth@latest
+
+## ⚠️ Важные моменты
+
+### Безопасность:
+
+- Только владелец может выводить средства
+    
+- Проверка `onlyOwner` на все функции вывода
+    
+- Защита от нулевых адресов при передаче владения
+    
+
+### Особенности:
+
+- **Минимальный платеж:** > 0 wei
+    
+- **Баланс контракта:** ETH хранятся на балансе контракта, не на кошельке владельца
+    
+- **Gas fee:** оплачивается всегда, даже при неудачных транзакциях
+    
+
+## 🧪 Тестирование
+
+### План демонстрации:
+
+1. **Проверка пустого контракта**
+    
+    - `getBalance()` → 0 ETH
+        
+    - `getOwner()` → адрес владельца
+        
+2. **Тест платежа (любой пользователь)**
+    
+    - `makePayment(0.1 ETH, "Тест")`
+        
+    - Проверить `getBalance()` → 0.1 ETH
+        
+    - Проверить событие `PaymentReceived`
+        
+3. **Тест вывода (владелец)**
+    
+    - `withdraw()` или `withdrawAmount(0.05 ETH)`
+        
+    - Проверить `getBalance()` → уменьшился
+        
+    - Проверить событие `Withdrawn`
+        
+4. **Тест безопасности (не владелец)**
+    
+    - Другой аккаунт пытается вызвать `withdraw()`
+        
+    - **Ожидается:** ошибка "Not the owner"
+        
+5. **Тест передачи прав**
+    
+    - Владелец: `transferOwnership(newAddress)`
+        
+    - Проверить `getOwner()` → новый адрес
+        
+    - Старый владелец больше не может выводить
+        
+
+## 📁 Структура проекта
+
+```text
+packages/hardhat/contracts/PaymentReceiver.sol  # Смарт-контракт
+packages/hardhat/deploy/00_deploy_payment_receiver.ts  # Скрипт деплоя
+packages/hardhat/test/PaymentReceiver.test.ts   # Тесты
+packages/nextjs/app/page.tsx                    # Веб-интерфейс
 ```
 
-This command will install all the necessary packages and dependencies, so it might take a while.
+## 🚀 Быстрый старт
 
-> [!NOTE]
-> You can also initialize your project with one of our extensions to add specific features or starter-kits. Learn more in our [extensions documentation](https://docs.scaffoldeth.io/extensions/).
+```bash
+# 1. Установка
+yarn install
 
-2. Run a local network in the first terminal:
-
-```
+# 2. Запуск локальной сети
 yarn chain
-```
 
-This command starts a local Ethereum network that runs on your local machine and can be used for testing and development. Learn how to [customize your network configuration](https://docs.scaffoldeth.io/quick-start/environment#1-initialize-a-local-blockchain).
-
-3. On a second terminal, deploy the test contract:
-
-```
+# 3. Деплой контракта (в другом терминале)
 yarn deploy
-```
 
-This command deploys a test smart contract to the local network. You can find more information about how to customize your contract and deployment script in our [documentation](https://docs.scaffoldeth.io/quick-start/environment#2-deploy-your-smart-contract).
-
-4. On a third terminal, start your NextJS app:
-
-```
+# 4. Запуск веб-интерфейса (в третьем терминале)
 yarn start
+
+# 5. Тестирование
+yarn hardhat:test
 ```
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+## 🎮 Полезные команды
 
-**What's next**:
+```bash
+# Перекомпилировать контракт
+yarn hardhat:compile
 
-Visit the [What's next section of our docs](https://docs.scaffoldeth.io/quick-start/environment#whats-next) to learn how to:
+# Запустить тесты
+yarn hardhat:test
 
-- Edit your smart contracts
-- Edit your deployment scripts
-- Customize your frontend
-- Edit the app config
-- Writing and running tests
-- [Setting up external services and API keys](https://docs.scaffoldeth.io/deploying/deploy-smart-contracts#configuration-of-third-party-services-for-production-grade-apps)
+# Очистить кэш
+yarn clean
 
-## Documentation
+# Проверить линтер
+yarn lint
+```
 
-Visit our [docs](https://docs.scaffoldeth.io) to learn all the technical details and guides of Scaffold-ETH 2.
+## 🔍 Полезные ссылки
 
-To know more about its features, check out our [website](https://scaffoldeth.io).
+- **Локальный Block Explorer:** [http://localhost:3000/blockexplorer](http://localhost:3000/blockexplorer)
+    
+- **Debug Contracts:** [http://localhost:3000/debug](http://localhost:3000/debug)
+    
+- **Контракт в Block Explorer:** `/blockexplorer/address/0x5FbDB2315678afecb367f032d93F642f64180aa3`
+    
 
-## Contributing to Scaffold-ETH 2
+## 💡 Частые вопросы
 
-We welcome contributions to Scaffold-ETH 2!
+### Q: Почему после withdraw() у меня уменьшился баланс, но я не получил ETH?
 
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+A: Вы вызвали `withdraw()` когда баланс контракта был 0. Потратился только gas fee.
+
+### Q: Как положить ETH в контракт?
+
+A: Через `makePayment()` в интерфейсе или прямой перевод на адрес контракта.
+
+### Q: Как узнать адрес контракта?
+
+A: После деплоя в консоли или в `packages/nextjs/utils/scaffold-eth/deployedContracts.ts`
+
+### Q: Почему в Debug Contracts не работают read-функции?
+
+A: Проблема с автоматической загрузкой ABI. Используйте прямое обращение через консоль или обновите `deployedContracts.ts`.
+
+---
+
+**Адрес контракта (локальная сеть):** `0x5FbDB2315678afecb367f032d93F642f64180aa3`
+**Сеть:** Hardhat (Localhost 8545)  
+**Chain ID:** 31337
+
+## User Story
+
+### Клиент
+
+Не авторизованный пользователь попадает на сайт и видит информацию о контракте.
+
+![alt text](<Pasted image 20260120232600 1.png>)
+
+После чего авторизуется при помощи metamask.
+
+![alt text](<Pasted image 20260120233313.png>)
+
+После авторизации пользователь может создать платёж на указанный выше контракт.
+
+![alt text](<Pasted image 20260120233700.png>)
+
+После чего подтвердить отправку через Metamask.
+
+![alt text](<Pasted image 20260120233811.png>)
+
+После чего счёт контракта пополняется. 
+
+Пользователь может узнать детали транзакции по специальной ссылке.
+
+![alt text](<Pasted image 20260120234018.png>)
+
+А также все существующие транзакции.
+
+![alt text](<Pasted image 20260120234331.png>)
+
+### Владелец
+
+Авторизуется как и клиент через metamask.
+
+![alt text](<Pasted image 20260120234929.png>)
+
+После авторизации у владельца появляется специальные функции. 
+
+![alt text](<Pasted image 20260120235748.png>)
+
+Владелец может вывести всё, вывести какую-то часть, передать права на контракт другому пользователю.
+
+Пример вывода 
+
+![alt text](<Pasted image 20260121000218.png>)
